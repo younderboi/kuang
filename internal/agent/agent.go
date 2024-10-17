@@ -15,13 +15,6 @@ type Agent struct {
 	CommandManager utils.CommandManager
 }
 
-type AgentTransport interface {
-	Connect() error
-	Read() (string, error)
-	Write(data string) error
-	Close() error
-}
-
 func (agent *Agent) Start() error {
 	// TODO: detect OS and build correct CommandManager, ie. sysenum command runs lipeas on linux and winpeas on windows
 	// TODO: note that this will increase the binary size compared to totally separate linux and windows builds, but who cares??

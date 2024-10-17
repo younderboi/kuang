@@ -6,6 +6,13 @@ import (
 	"net"
 )
 
+type AgentTransport interface {
+	Connect() error
+	Read() (string, error)
+	Write(data string) error
+	Close() error
+}
+
 // === TCP Transport
 type TCPTransport struct {
 	LHOST string

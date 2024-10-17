@@ -13,6 +13,7 @@ type AgentProxy interface {
 	GetAgentID() AgentID
 	Send(args []string) error
 	Receive() (string, error)
+	IsAlive() bool
 	// Start() (AgentID, error)
 	Stop() error
 }
@@ -32,7 +33,8 @@ func (agent *TCPAgentProxy) GetAgentID() AgentID {
 func (agent *TCPAgentProxy) Send(args []string) error {
 	// Join the command and arguments
 	fullCommand := strings.Join(args, " ") + "\n"
-	_, err := fmt.Fprintf(agent.Conn, fullCommand+"\n")
+
+	_, err := fmt.Fprintf(agent.Conn, fullCommand)
 	if err != nil {
 		fmt.Println("Error sending command:", err)
 		return err
@@ -65,66 +67,22 @@ func (agent *TCPAgentProxy) Receive() (string, error) {
 	return responseBuilder.String(), nil
 }
 
-func (agent *TCPAgentProxy) Stop() error {
-	err := agent.Conn.Close()
+func (agent *TCPAgentProxy) IsAlive() bool {
+	// TODO: slightly oversimplistic??
+	err := agent.Send([]string{"ping"})
 	if err != nil {
-		return err
+		return false
+	}
+	_, err = agent.Receive()
+	if err != nil {
+		return false
 	}
 
-	return nil
+	// TODO: check the actual response for pong
+
+	return true
 }
 
-// =========================
-// === Local Agent Proxy ===
-// =========================
-// TODO: untested
-type LocalAgent struct {
-	AgentID  AgentID
-	CmdChan  chan string
-	RespChan chan string
-}
-
-func NewAgent(agentID AgentID) (agent *LocalAgent) {
-	return &LocalAgent{
-		AgentID:  agentID,
-		CmdChan:  make(chan string),
-		RespChan: make(chan string),
-	}
-}
-
-func (agent *LocalAgent) Send(CMD string, args []string) error {
-	agent.CmdChan <- CMD
-
-	return nil
-}
-
-func (agent *LocalAgent) Receive() (string, error) {
-	resp := <-agent.RespChan
-	return resp, nil
-}
-
-func (agent *LocalAgent) Start() {
-	println("Agent", agent.AgentID, "listening")
-
-	for {
-		cmd := <-agent.CmdChan
-		println("Received command:", cmd)
-
-		if cmd == "kill" {
-			agent.Stop()
-			break
-		}
-
-		agent.RespChan <- fmt.Sprintf("Agent %s received command: %s", agent.AgentID, cmd)
-	}
-
-	return
-}
-
-func (agent *LocalAgent) Stop() {
-	println("Killing Agent", agent.AgentID)
-
-	agent.RespChan <- fmt.Sprintf("Agent %s killed", agent.AgentID)
-
-	return
+func (agent *TCPAgentProxy) Stop() error {
+	return agent.Conn.Close()
 }

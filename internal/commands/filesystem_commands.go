@@ -8,7 +8,7 @@ import (
 
 // === Make Directory
 func HandleMakeDirectory(args ...string) (string, error) {
-	if len(args) < 2 {
+	if len(args) < 1 {
 		return "", fmt.Errorf("no dir path specified")
 	}
 
@@ -24,10 +24,10 @@ func HandleMakeDirectory(args ...string) (string, error) {
 
 // === Cat
 func HandleCat(args ...string) (string, error) {
-	if len(args) < 2 {
+	if len(args) < 1 {
 		return "", fmt.Errorf("no file specified")
 	}
-	return readFile(args[1])
+	return readFile(args[0])
 }
 
 func readFile(filename string) (string, error) {
@@ -43,10 +43,11 @@ func readFile(filename string) (string, error) {
 
 // === CD
 func HandleChangeDir(args ...string) (string, error) {
-	if len(args) < 2 {
+	fmt.Println("handling change diiiiirs", args)
+	if len(args) < 1 {
 		return "", fmt.Errorf("no directory specified")
 	}
-	return changeDir(args[1])
+	return changeDir(args[0])
 }
 
 func changeDir(path string) (string, error) {

